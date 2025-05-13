@@ -11,6 +11,8 @@
 
 //Graphics Libraries
 import java.awt.Graphics2D;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.image.BufferStrategy;
 import java.awt.*;
 import javax.swing.JFrame;
@@ -20,7 +22,7 @@ import javax.swing.JPanel;
 //*******************************************************************************
 
 
-public class GameLand implements Runnable {
+public class GameLand implements Runnable, KeyListener {
 
 
     //Variable Definition Section
@@ -28,27 +30,20 @@ public class GameLand implements Runnable {
     //You can set their initial values too
 
 
-    public Character Donkey;
     public Character Robber;
-    public Character Bird;
     public Character SpiderMan;
-    public Character Zookeeper;
-    public Character animalControl;
     public Character healthBar;
-    public Character blueHealthBar;
 
 
-    public Image donkeyPic;
     public Image robberPic;
-    public Image birdPic;
     public Image spiderPic;
-    public Image zooKeeperPic;
-    public Image animalControlPic;
     public Image healthBarPic;
-    public Image blueHealthPic;
 
+    public Image bombPic;
 
+    public Image webPic;
 
+    public Image bankPic;
 
     public Image backgroundPic;
     public Image cityPic;
@@ -62,15 +57,64 @@ public class GameLand implements Runnable {
     public Image animalSignPic;
     public Image chickenPic;
     public Image refPic;
+    public Image moneyBagsPic;
+
+    public Image startScreenPic;
+    public Image press1Pic;
+    public Image press2Pic;
+
+    public Image player1Pic;
+    public Image player2Pic;
+
+    public Image endlessRulesPic;
+    public Image rules1Pic;
+    public Image rules2Pic;
+    public Image rules3Pic;
+    public Image rules4Pic;
+    public Image wasdPic;
+    public Image toMovePic;
 
 
-    public boolean BirdIsIntersectingDonkey;
+    public Image swallowedPic;
+    public Image uhohPic;
+
+    public Image onePic;
+    public Image twoPic;
+    public Image threePic;
+
+
+
+
+
+    public Image endlessBackground;
+
+    public int maxSpeed = 5;
+    public int minSpeed = 0;
+    public double ddx = .15;
+    public double ddy = .15;
+
+    public int score;
+
+    public long timeStart;
+    public long timeNow;
+    public long timeElapsed;
+
+
     public boolean RobberIsCaught;
-    public boolean DonkeyIsInZoo;
-    public boolean BirdIsFightingSpider;
-    public boolean AnimalControlHasCaughtSpiderman;
-    public boolean BirdIsCookedChicken;
 
+    public boolean startScreen = true;
+    public boolean endlessRules;
+    public boolean startEndless;
+    public boolean lostEndless;
+    public boolean gameOver;
+
+    public boolean loseOnce = false;
+
+    public boolean levelsRules;
+
+    public Obstacle[] moneyBags;
+    public Obstacle[] web;
+    public Obstacle[] bomb;
 
     //Sets the width and height of the program window
     final int WIDTH = 1000;
@@ -86,8 +130,6 @@ public class GameLand implements Runnable {
     public BufferStrategy bufferStrategy;
 
 
-
-
     // Main method definition
     // This is the code that runs first and automatically
     public static void main(String[] args) {
@@ -96,40 +138,56 @@ public class GameLand implements Runnable {
     }
 
 
-
-
     // This section is the setup portion of the program
     // Initialize your variables and construct your program objects here.
     public GameLand() { // BasicGameApp constructor
 
+        timeStart = System.currentTimeMillis();
 
         setUpGraphics();
 
 
-
-
         //variable and objects
         //create (construct) the objects needed for the game
-        Donkey = new Character((int)(Math.random()*800), (int)(Math.random()*600), -1, 1);
-        Robber = new Character((int)(Math.random()*800), (int)(Math.random()*600), 1, -1);
-        Bird = new Character((int)(Math.random()*800), (int)(Math.random()*600), 1, 1);
-        SpiderMan = new Character((int)(Math.random()*800), (int)(Math.random()*600), -2, -1);
-        Zookeeper = new Character((int)(Math.random()*800), (int)(Math.random()*600), 2, 2);
-        animalControl = new Character((int)(Math.random()*800), (int)(Math.random()*600), -1, -1);
+        Robber = new Character(100, 300, 0, 0);
+        SpiderMan = new Character(800, 300, 0, 0);
+
+        web = new Obstacle[500];
+        bomb = new Obstacle[500];
 
 
-        healthBar = new Character(300, 30,0,0);
-        blueHealthBar = new Character(300,30,0,0);
+        healthBar = new Character(300, 30, 0, 0);
 
+        //STEP 2 for Array
+        moneyBags = new Obstacle[1000];
 
-        Donkey.printInfo();
+        //step 3 USE LOOP TO FILL
+        for (int x = 0; x < moneyBags.length; x = x + 1) {
+            int randX = (int) (150000 * Math.random() + 1500);
+            int randY = (int) (550 * Math.random());
+            int randDX = (int) (-5 * Math.random()) - 1;
+
+            moneyBags[x] = new Obstacle(randX, randY, randDX, 0);
+        }
+        for (int x = 0; x < bomb.length; x = x + 1) {
+            int randX = (int) (150000 * Math.random() + 1500);
+            int randY = (int) (550 * Math.random());
+            int randDX = (int) (-5 * Math.random()) - 1;
+
+            bomb[x] = new Obstacle(randX, randY, randDX, 0);
+        }
+
+        for (int x = 0; x < web.length; x = x + 1) {
+            int randX = (int) (150000 * Math.random() + 1500);
+            int randY = (int) (550 * Math.random());
+            int randDX = (int) (-5 * Math.random()) - 1;
+
+            web[x] = new Obstacle(randX, randY, randDX, 0);
+        }
+
         Robber.printInfo();
-        Bird.printInfo();
         SpiderMan.printInfo();
-        Zookeeper.printInfo();
-        animalControl.printInfo();
         healthBar.printInfo();
-        blueHealthBar.printInfo();
 
 
         //construct images
@@ -138,38 +196,50 @@ public class GameLand implements Runnable {
         jailPic = Toolkit.getDefaultToolkit().getImage("jailPic.png");
         healthBarPic = Toolkit.getDefaultToolkit().getImage("healthBarPic.png");
         boomPic = Toolkit.getDefaultToolkit().getImage("boomPic.png");
-        zooPic = Toolkit.getDefaultToolkit().getImage("zooPic.png");
-        yumPic = Toolkit.getDefaultToolkit().getImage("yumPic.png");
         boxingPic = Toolkit.getDefaultToolkit().getImage("boxingPic.png");
         mutantPic = Toolkit.getDefaultToolkit().getImage("mutantPic.png");
-        blueHealthPic = Toolkit.getDefaultToolkit().getImage("blueHealthPic.png");
         cagePic = Toolkit.getDefaultToolkit().getImage("cagePic.png");
         animalSignPic = Toolkit.getDefaultToolkit().getImage("animalSignPic.png");
         chickenPic = Toolkit.getDefaultToolkit().getImage("chickenPic.png");
         refPic = Toolkit.getDefaultToolkit().getImage("refPic.png");
 
+        bankPic = Toolkit.getDefaultToolkit().getImage("bankPic.jpg");
 
-        donkeyPic = Toolkit.getDefaultToolkit().getImage("donkeyPic.png");
+        startScreenPic = Toolkit.getDefaultToolkit().getImage("startScreenPic.png");
+        press1Pic = Toolkit.getDefaultToolkit().getImage("press1Pic.png");
+        press2Pic = Toolkit.getDefaultToolkit().getImage("press2Pic.png");
+
+        player1Pic = Toolkit.getDefaultToolkit().getImage("player1Pic.png");
+        player2Pic = Toolkit.getDefaultToolkit().getImage("player2Pic.png");
+
+        endlessRulesPic = Toolkit.getDefaultToolkit().getImage("endlessRulesPic.png");
+        rules1Pic = Toolkit.getDefaultToolkit().getImage("rules1Pic.png");
+        rules2Pic = Toolkit.getDefaultToolkit().getImage("rules2Pic.png");
+        rules3Pic = Toolkit.getDefaultToolkit().getImage("rules3Pic.png");
+        rules4Pic = Toolkit.getDefaultToolkit().getImage("rules4Pic.png");
+
+
+        swallowedPic = Toolkit.getDefaultToolkit().getImage("swallowedPic.png");
+        uhohPic = Toolkit.getDefaultToolkit().getImage("uhohPic.png");
+        wasdPic = Toolkit.getDefaultToolkit().getImage("wasdPic.png");
+        toMovePic = Toolkit.getDefaultToolkit().getImage("toMovePic.png");
+
+        onePic = Toolkit.getDefaultToolkit().getImage("onePic.png");
+        twoPic = Toolkit.getDefaultToolkit().getImage("twoPic.png");
+        threePic = Toolkit.getDefaultToolkit().getImage("threePic.png");
+
+
+        endlessBackground = Toolkit.getDefaultToolkit().getImage("endlessBackground.png");
+
+
+        moneyBagsPic = Toolkit.getDefaultToolkit().getImage("moneyBagPic.png");
         robberPic = Toolkit.getDefaultToolkit().getImage("robberPic.png");
-        birdPic = Toolkit.getDefaultToolkit().getImage("birdPic.png");
         spiderPic = Toolkit.getDefaultToolkit().getImage("spiderPic.png");
-        zooKeeperPic = Toolkit.getDefaultToolkit().getImage("zooKeeperPic.png");
-        animalControlPic = Toolkit.getDefaultToolkit().getImage("animalControlPic.png");
-
-
-
-
-
-
-
-
-
-
+        webPic = Toolkit.getDefaultToolkit().getImage("webPic.png");
+        bombPic = Toolkit.getDefaultToolkit().getImage("bombPic.png");
 
 
     } // end BasicGameApp constructor
-
-
 
 
 //*******************************************************************************
@@ -186,9 +256,9 @@ public class GameLand implements Runnable {
             moveThings();  //move all the game objects
             render();  // paint the graphics
             checkCollision();
+            acceleration();
             jailEscape();
-            zooShenanigans();
-            BoxingMatch();
+            timer();
             pause(10); // sleep for 10 ms
 
 
@@ -197,163 +267,175 @@ public class GameLand implements Runnable {
 
     }
 
+    public void rulesEndless() {
+        if (startScreen) {
+            startScreen = false;
+            endlessRules = true;
+        }
+    }
+
+    public void levelEndless() {
+        if (endlessRules == true) {
+            endlessRules = false;
+            startEndless = true;
+
+            endless();
+        }
+    }
+
+    public void endless() {
+        score = 0;
+
+    }
+
+    public void lostEndless(){
+        timeStart = System.currentTimeMillis();
+        System.out.println(timeElapsed);
+    }
+
+    public void endScreen(){
+        gameOver = true;
+
+    }
+//        if(level1 && score>14){ // transition from level 1 to pause screen
+//            level1=false;
+//            startScreen2=true;
+//        }
+//        if (startScreen2){//transition from pause screen to level 2
+//            startScreen2=false;
+//            level2=true;
+//            startLevel2();
+//            // System.out.println("level 2 has started");
+//        }
+//        if(gameOver){ //restart the game transition from game over to level 1
+//            gameOver=false;
+//            level1=true;
+//            startLevel1();
+//        }
+
 
     public void moveThings() {
-        Donkey.bounceMove();
-        Bird.bounceMove();
-        Robber.bounceMove();
-        SpiderMan.bounceMove();
-        Zookeeper.bounceMove();
-        animalControl.bounceMove();
-
-
-        //call the move() code for each object
+        Robber.keyMove();
+        SpiderMan.keyMove();
+        if (startEndless) {
+            for (int x = 0; x < moneyBags.length; x = x + 1) {
+                moneyBags[x].Wrap();
+            }
+            for (int x = 0; x < web.length; x = x + 1) {
+                web[x].Wrap();
+            }
+            for (int x = 0; x < bomb.length; x = x + 1) {
+                bomb[x].Wrap();
+            }
+        }
     }
+
     public void checkCollision() {
-        if (Bird.rec.intersects(Donkey.rec) && BirdIsIntersectingDonkey == false) {
-            BirdIsIntersectingDonkey = true;
-            System.out.println("Crash!");
-            Donkey.dx = (-1) * Donkey.dx;
-            Donkey.dy = (-1) * Donkey.dy;
-            Bird.dx = (-1) * Bird.dx;
-            Bird.dy = (-1) * Bird.dy;
+        for (int x = 0; x < moneyBags.length; x = x + 1) {
+            if (Robber.rec.intersects(moneyBags[x].rec)) {
+                moneyBags[x].bagCollected();
+                score = score + moneyBags[x].height / 5;
+            }
         }
-        if(Bird.rec.intersects(Donkey.rec)==false){
-            BirdIsIntersectingDonkey = false;
+        for (int x = 0; x < web.length; x = x + 1) {
+            if (Robber.rec.intersects(web[x].rec)) {
+                Robber.dx = 0;
+                Robber.dy = 0;
+            }
+        }
+        for (int x = 0; x < bomb.length; x = x + 1) {
+            if (Robber.rec.intersects(bomb[x].rec)) {
+                lostEndless = true;
+            }
+
+            if (lostEndless && loseOnce == false) {
+                loseOnce = true;
+                lostEndless();
+
+            }
+
         }
 
+    }
 
-        //robber collision with jail cell wall
+    public void acceleration() {
+        if (Robber != null) {
+            if (Robber.leftIsPressed) {
+                if (Robber.dx > -maxSpeed) {
+                    Robber.dx -= ddx;
+                    System.out.println("hi" + Robber.dx);
+                }
+            } else if (Robber.rightIsPressed) {
+                if (Robber.dx < maxSpeed) {
+                    Robber.dx += ddx;
+                }
+            } else {
+                Robber.dx *= .99;
+            }
+            if (Robber.upIsPressed) {
+                if (Robber.dy > -maxSpeed) {
+                    Robber.dy -= ddy;
+                }
+            } else if (Robber.downIsPressed) {
+                if (Robber.dy < maxSpeed) {
+                    Robber.dy += ddy;
+                }
+            } else {
+                Robber.dy *= .99;
+            }
+        }
+        if (SpiderMan != null) {
+            if (SpiderMan.leftIsPressed) {
+                if (SpiderMan.dx > -maxSpeed) {
+                    SpiderMan.dx -= ddx;
+                }
+            } else if (SpiderMan.rightIsPressed) {
+                if (SpiderMan.dx < maxSpeed) {
+                    SpiderMan.dx += ddx;
+                }
+            } else {
+                SpiderMan.dx *= .99;
+            }
+            if (SpiderMan.upIsPressed) {
+                if (SpiderMan.dy > -maxSpeed) {
+                    SpiderMan.dy -= ddy;
+                }
+            } else if (SpiderMan.downIsPressed) {
+                if (SpiderMan.dy < maxSpeed) {
+                    SpiderMan.dy += ddy;
+                }
+            } else {
+                SpiderMan.dy *= .99;
+            }
+        }
+
         if (Robber.rec.intersects(SpiderMan.rec) && RobberIsCaught == false) {
-            Robber.dx=3;
-            Robber.dy=3;
-            healthBar.xpos=300;
-            healthBar.width=400;
-            healthBar.height=30;
-            Bird.xpos=1000000;
-            Zookeeper.xpos=2000000;
-            animalControl.xpos=3000000;
-            Donkey.xpos=4000000;
-            SpiderMan.xpos=5000000;
+            healthBar.xpos = 300;
+            healthBar.width = 400;
+            healthBar.height = 30;
             RobberIsCaught = true;
-        }
-
-
-        if (Donkey.rec.intersects(animalControl.rec) && DonkeyIsInZoo == false){
-            Donkey.width=60;
-            Donkey.height=80;
-            Donkey.dx = Donkey.dx - 3;
-            Donkey.dy = Donkey.dy - 5;
-            Zookeeper.xpos=0;
-            Zookeeper.ypos=300;
-            Bird.xpos=10000000;
-            animalControl.xpos=3000000;
-            SpiderMan.xpos=5000000;
-            Robber.xpos=6000000;
-            DonkeyIsInZoo = true;
-        }
-
-
-        if (Bird.rec.intersects(SpiderMan.rec) && BirdIsFightingSpider == false) {
-            Bird.dx = 3;
-            Bird.dy = 3;
-            SpiderMan.dx = 3;
-            SpiderMan.dy = 3;
-
-            healthBar.width=300;
-            healthBar.height=30;
-
-            blueHealthBar.width=300;
-            blueHealthBar.height=30;
-
-            BirdIsFightingSpider = true;
-            Bird.xpos=200; Bird.ypos=200;
-            SpiderMan.xpos=700; SpiderMan.ypos=400;
-            animalControl.xpos=3000000;
-            Robber.xpos=6000000;
-            Donkey.xpos=5000000;
-        }
-
-
-        if (SpiderMan.rec.intersects(animalControl.rec) && AnimalControlHasCaughtSpiderman == false) {
-            AnimalControlHasCaughtSpiderman = true; //see render for more interaction
-            Robber.xpos=6000000;
-            Donkey.xpos=5000000;
-            Bird.xpos = 7000000;
-            animalControl.xpos=200;
-            SpiderMan.xpos=800;
-        }
-
-
-        if(Bird.rec.intersects(Robber.rec) && BirdIsCookedChicken == false){
-            BirdIsCookedChicken = true; //see render for changes
-        }
-        if(Bird.rec.intersects(Robber.rec) == false && BirdIsCookedChicken == true){
-            BirdIsCookedChicken = false; //see render for changes
-
+            SpiderMan.xpos = 800;
 
         }
-
 
     }
 
     public void jailEscape() {
-        if (RobberIsCaught == true && Robber.xpos > 900) {
-            healthBar.width = healthBar.width - 40;
-        }
-        if (RobberIsCaught == true && Robber.xpos < 0) {
-            healthBar.width = healthBar.width - 40;
-        }
-        if (RobberIsCaught == true && Robber.ypos > 580) {
-            healthBar.width = healthBar.width - 40;
-        }
-        if (RobberIsCaught == true && Robber.ypos < 0) {
-            healthBar.width = healthBar.width - 40;
+        if (Robber.rec.intersects(SpiderMan.rec)) {
+            healthBar.width = healthBar.width - 5;
         }
     }
 
-
-    public void zooShenanigans(){
-        if (Donkey.rec.intersects(Zookeeper.rec) && DonkeyIsInZoo == true) {
-            Zookeeper.xpos = 10000000;
-            Donkey.width = Donkey.width + 50;
-            Donkey.height = Donkey.height + 50;
-            Donkey.dx = Donkey.dx + 3;
-            Donkey.dy = Donkey.dy + 5;
-
-
-        }
-        if(Donkey.xpos>800 && DonkeyIsInZoo==true && Zookeeper.xpos>10000){ // just so it waits a second before teleporting - even though there is still a chance it is instant
-            DonkeyIsInZoo = false;
-            Bird.xpos=500;
-            animalControl.xpos=600;
-            Donkey.xpos=200;
-            SpiderMan.xpos=100;
-            Robber.xpos=900;
-
-            Donkey.dx = 1;
-            Donkey.dy = 1;
-
-        }
-    }
-
-
-    public void BoxingMatch() {
-        if (Bird.rec.intersects(SpiderMan.rec)){
-            healthBar.width = healthBar.width - 60;
-            blueHealthBar.width = blueHealthBar.width - 40;
-
-            Bird.dx = (-1) * Bird.dx;
-            Bird.dy = (-1) * Bird.dy;
-            SpiderMan.dx = (-1)* SpiderMan.dx;
-            SpiderMan.dy = (-1)* SpiderMan.dy;
-        }
+    public void timer() {
+        timeNow = System.currentTimeMillis();
+        timeElapsed = (int) ((timeNow - timeStart) * .001);
     }
 
 
 
 
-    //Paints things on the screen using bufferStrategy
+
+        //Paints things on the screen using bufferStrategy
     private void render() {
         Graphics2D g = (Graphics2D) bufferStrategy.getDrawGraphics();
         g.clearRect(0, 0, WIDTH, HEIGHT);
@@ -361,22 +443,62 @@ public class GameLand implements Runnable {
 
         //draw the images
 //        g.drawImage(backgroundPic,0,0,1000,700,null);
+        if(startScreen==true) {
+            g.drawImage(startScreenPic, 0, 0, 1000, 700, null);
+            g.drawImage(press1Pic, 30, 60, 420, 100, null);
+            g.drawImage(press2Pic, 550, 60, 420, 100, null);
+            g.drawImage(player1Pic, 150, 140, 170, 75, null);
+            g.drawImage(player2Pic, 670, 140, 170, 75, null);
+        }
+        if(endlessRules){
+            g.drawImage(endlessRulesPic, 0, 0, 1000, 700, null);
+            g.drawImage(rules1Pic, 60, -15, 900, 115, null);
+            g.drawImage(rules2Pic, 65, 100, 340, 85, null);
+            g.drawImage(rules3Pic, 600, 100, 340, 85, null);
+            g.drawImage(rules4Pic, 65, 165, 340, 85, null);
+            g.drawImage(toMovePic, 600, 300, 340, 85, null);
+            g.drawImage(wasdPic, 640, 170, 250, 150, null);
 
 
-        if (RobberIsCaught == false && DonkeyIsInZoo == false && AnimalControlHasCaughtSpiderman == false && BirdIsFightingSpider == false) {
-            g.drawImage(cityPic, 0, 0, 1000, 700, null);
+
+        }
+        if(startEndless){
+            g.drawImage(endlessBackground, 0, 0, 1000, 700, null);
+            g.setColor(Color.WHITE);
+            Font moneyCollected = new Font( "Dialog", Font.BOLD, 20 );
+            g.setFont(moneyCollected);
+            g.drawString("Money Collected: "+ score +"$", 750, 35);
+            for(int x=0;x<moneyBags.length; x=x+1){
+                g.drawImage(moneyBagsPic, moneyBags[x].xpos,moneyBags[x].ypos,moneyBags[x].width,moneyBags[x].height,null);
+            }
+            for(int x=0;x<web.length; x=x+1){
+                g.drawImage(webPic, web[x].xpos,web[x].ypos,web[x].width,web[x].height,null);
+            }
+            for(int x=0;x<bomb.length; x=x+1){
+                g.drawImage(bombPic, bomb[x].xpos,bomb[x].ypos,bomb[x].width,bomb[x].height,null);
+            }
+            g.drawImage(robberPic, Robber.xpos, Robber.ypos, Robber.width, Robber.height, null);
         }
 
-
-        if (RobberIsCaught == false && DonkeyIsInZoo == false && SpiderMan.xpos > 5000) { //any character works for using xpos, i just chose spiderman
-            Bird.xpos = 900;
-            animalControl.xpos = 200;
-            Donkey.xpos = 300;
-            SpiderMan.xpos = 100;
-            Robber.xpos = 500;
-            g.drawImage(cityPic, 0, 0, 1000, 700, null);
+        if(lostEndless==true) {
+            g.drawImage(uhohPic, 300, -15, 400, 200, null);
+            g.drawImage(swallowedPic, 100, 510, 800, 200, null);
         }
+            if (lostEndless && timeElapsed > 1 && timeElapsed <= 2) {
+                g.drawImage(threePic, 300, 140, 400, 400, null);
+            } else if (lostEndless && timeElapsed > 2 && timeElapsed <= 3) {
+                g.drawImage(twoPic, 300, 140, 400, 400, null);
+            } else if (lostEndless && timeElapsed > 3 && timeElapsed <= 4) {
+                g.drawImage(onePic, 300, 140, 400, 400, null);
+            } else if (lostEndless && timeElapsed > 4 && timeElapsed <=5) {
+                g.drawImage(boomPic, 200, 0, 700, 700, null);
+            } else if (lostEndless && timeElapsed > 5) {
+                endScreen();
+            }
 
+//        if (RobberIsCaught == false) {
+//            g.drawImage(bankPic, 0, 0, 1000, 700, null);
+//        }
 
         if (RobberIsCaught == true) {
             g.drawImage(jailPic, 0, 0, 1000, 700, null);
@@ -385,92 +507,25 @@ public class GameLand implements Runnable {
         if (healthBar.width == 0 && RobberIsCaught == true) { // later add text to say "robber escaped"
             g.drawImage(boomPic, 0, 0, 1100, 600, null);
         }
-        if (healthBar.width == -40 && RobberIsCaught == true) { //so that it waits a few seconds before returning to city
+        if (healthBar.width == -5 && RobberIsCaught == true) { //so that it waits a few seconds before returning to city
             RobberIsCaught = false;
-            Robber.dx = 1;
-            Robber.dy = 1;
             Robber.ypos = 500;
             Robber.xpos = 10;
             healthBar.width = 400;
-        }
-        if (DonkeyIsInZoo == true) {
-            g.drawImage(zooPic, 0, 0, 1000, 700, null);
-            g.drawImage(zooKeeperPic, Zookeeper.xpos, Zookeeper.ypos, Zookeeper.width, Zookeeper.height, null);
-        }
-        if (Zookeeper.xpos > 10000 && DonkeyIsInZoo == true) {
-            g.drawImage(yumPic, 145, 200, 750, 320, null);
-        }
+            SpiderMan.xpos = 500;
+            SpiderMan.ypos = 500;
 
-        if (BirdIsFightingSpider == true) {
-            g.drawImage(boxingPic, 0, 0, 1000, 700, null);
-
-
-            g.drawImage(blueHealthPic, 100, 30, blueHealthBar.width, blueHealthBar.height, null);
-            g.drawImage(healthBarPic, 600, 30, healthBar.width, healthBar.height, null);
-        }
-        if (healthBar.width == 0 && BirdIsFightingSpider == true) {
-            g.drawImage(refPic, 300, 200, 300, 450, null);
-        }
-        if (healthBar.width == -60 && BirdIsFightingSpider == true) { //so that it waits a few seconds before returning to city
-            BirdIsFightingSpider = false;
-            Bird.dx = 2;
-            Bird.dy = 2;
-            SpiderMan.dy = 2;
-            SpiderMan.dx = 2;
-
-
-            Bird.width = 60;
-            Bird.height = 80;
-
-            SpiderMan.width = 60;
-            SpiderMan.height = 80;
-
-            healthBar.width = 300;
-            blueHealthBar.width = 300;
-
-
-            Bird.xpos = 100;
-            animalControl.xpos = 200;
-            Donkey.xpos = 300;
-            SpiderMan.xpos = 400;
-            Robber.xpos = 500;
         }
 
 
-        if (AnimalControlHasCaughtSpiderman == true) {
-            g.drawImage(cagePic, 0, 0, 1000, 700, null);
-            g.drawImage(animalSignPic, 40, 400, 400, 300, null);
-        }
-        if (AnimalControlHasCaughtSpiderman == true && SpiderMan.ypos < 0) { //so that it waits a second
-            g.drawImage(animalSignPic, 40, 400, 400, 300, null);
-            animalControl.xpos = 1000000;
-            AnimalControlHasCaughtSpiderman = false;
-        }
-
-
-        if (AnimalControlHasCaughtSpiderman == false && animalControl.xpos > 10000 && RobberIsCaught == false && DonkeyIsInZoo == false && BirdIsFightingSpider == false) { //any character works for using xpos, i just chose spiderman
-            Bird.xpos = 100;
-            animalControl.xpos = 200; animalControl.ypos = 400;
-            Donkey.xpos = 300;
-            SpiderMan.xpos = 400;
-            Robber.xpos = 500;
-            g.drawImage(cityPic, 0, 0, 1000, 700, null);
-        }
-        if (BirdIsCookedChicken == true) {
-            g.drawImage(chickenPic, Bird.xpos, Bird.ypos, 200, 160, null);
-        }
-        if (BirdIsCookedChicken == false) {
-            g.drawImage(birdPic, Bird.xpos, Bird.ypos, Bird.width, Bird.height, null);
-        }
         if (healthBar.width > 0){
             g.drawImage(spiderPic, SpiderMan.xpos, SpiderMan.ypos, SpiderMan.width, SpiderMan.height, null);
     }
-        g.drawImage(donkeyPic, Donkey.xpos, Donkey.ypos, Donkey.width, Donkey.height, null);
-        g.drawImage(animalControlPic, animalControl.xpos, animalControl.ypos, animalControl.width, animalControl.height, null);
-        g.drawImage(robberPic, Robber.xpos, Robber.ypos, Robber.width, Robber.height, null);
+
 
 
         bufferStrategy.show();
+
 
 
     }
@@ -511,7 +566,7 @@ public class GameLand implements Runnable {
         frame.setResizable(false);   //makes it so the frame cannot be resized
         frame.setVisible(true);      //IMPORTANT!!!  if the frame is not set to visible it will not appear on the screen!
 
-
+canvas.addKeyListener(this);
         // sets up things so the screen displays images nicely.
         canvas.createBufferStrategy(2);
         bufferStrategy = canvas.getBufferStrategy();
@@ -520,6 +575,91 @@ public class GameLand implements Runnable {
     }
 
 
+    @Override
+    public void keyTyped(KeyEvent e) {
+
+    }
+
+    @Override
+    public void keyPressed(KeyEvent e) {
+        char key = e.getKeyChar();
+        int keyCode = e.getKeyCode();
+        System.out.println("Key Pressed: " +key+ " , Key Code: " + keyCode);
+
+        if(keyCode==68){
+            Robber.rightIsPressed=true;
+        }
+        if (keyCode==65){
+            Robber.leftIsPressed=true;
+        }
+        if(keyCode==87){
+            Robber.upIsPressed=true;
+        }
+        if(keyCode==83){
+            Robber.downIsPressed=true;
+        }
+
+        //now spiderman
+        if(keyCode == 37) { //keycode for a
+            SpiderMan.leftIsPressed=true;
+        }
+        if(keyCode == 38) { //keycode for w
+            SpiderMan.upIsPressed=true;
+        }
+        if(keyCode == 39) { //keycode for s
+            SpiderMan.rightIsPressed=true;
+        }
+        if(keyCode == 40) { //keycode for d
+            SpiderMan.downIsPressed=true;
+
+        }
+
+
+
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e) {
+        char key = e.getKeyChar();
+        int keyCode = e.getKeyCode();
+
+        if(endlessRules && keyCode == 32){
+            levelEndless();
+        }
+        if(keyCode==49) {
+            rulesEndless();
+        }
+        if(keyCode==50) {
+//            rulesLevels();
+        }
+        if(keyCode==68){// d is 68 // right movement
+            Robber.rightIsPressed=false;
+        }
+        if (keyCode==65){
+            Robber.leftIsPressed=false;
+        }
+        if(keyCode==87){
+            Robber.upIsPressed=false;
+        }
+        if(keyCode==83){
+            Robber.downIsPressed=false;
+
+        }
+//for spiderman
+        if(keyCode == 37) {
+            SpiderMan.leftIsPressed=false;
+        }
+        if(keyCode == 38) {
+            SpiderMan.upIsPressed=false;
+        }
+        if(keyCode == 39) {
+            SpiderMan.rightIsPressed=false;
+        }
+        if(keyCode == 40) {
+            SpiderMan.downIsPressed=false;
+        }
+
+    }
 }
 
 

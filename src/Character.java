@@ -4,24 +4,34 @@ public class Character {
     //declare variables
     public int xpos;
     public int ypos;
-    public int dx; //speed in the x direction
-    public int dy; //speed in the y direction
+
+    public double dx; //speed in the x direction
+    public double dy;//speed in the y direction
+
+    public double ddx;
+    public double ddy;
+
+    public boolean leftIsPressed;
+    public boolean rightIsPressed;
+    public boolean upIsPressed;
+    public boolean downIsPressed;
+
+
+
     public int width;
     public int height;
     public Boolean isAlive;
-    public Image pic;
     public Rectangle rec;
     //constructor
 
-    public Character(int pXpos, int pYpos, int pDx, int pDy) {
+    public Character(int pXpos, int pYpos, double pDx, double pDy) {
         xpos = pXpos;
         ypos = pYpos;
         dx = pDx;
         dy = pDy;
         width = 100;
-        height = 120;
+        height = 100;
         isAlive = true;
-
 
     }
 
@@ -42,27 +52,38 @@ public class Character {
         if (ypos < 0) {
             dy = (-1) * dy;
         }
-        xpos = xpos + dx;
-        ypos = ypos + dy;
+
+        xpos = (int)(xpos + dx);
+        ypos = (int)(ypos + dy);
         rec = new Rectangle(xpos,ypos,width,height);
     }
 
     public void wrapMove() {
-        if (xpos > 1000) {
-            xpos = 0 - width;
+        if (xpos < -2000) {
+            xpos = (int) (Math.random() * 15000 + 2000);
         }
-        if (xpos < 0 - width) {
-            xpos = 1000;
+
+        xpos = (int)(xpos + dx);
+        ypos = (int)(ypos + dy);
+
+            rec = new Rectangle(xpos, ypos, width, height);
         }
-        if (ypos > 700) {
-            ypos = 0 - height;
-        }
-        if (ypos < 0 - height) {
-            ypos = 700;
-        }
-        xpos = xpos + dx;
-        ypos = ypos + dy;
+
+    public void keyMove(){
+
+        xpos = (int)(xpos + dx);
+        ypos = (int)(ypos + dy);
         rec = new Rectangle(xpos,ypos,width,height);
+
+        dx = dx + ddx;
+        dy = dy + ddy;
+    }
+
+    public void shootWeb(){
+        xpos = (int)(xpos + dx);
+        ypos = (int)(ypos + dy);
+        rec = new Rectangle(xpos,ypos,width,height);
+
     }
 
 
